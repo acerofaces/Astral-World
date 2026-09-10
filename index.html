@@ -27,8 +27,8 @@
       min-height: 100vh;
     }
 
-    /* Target all text elements to be purely gradient */
-    h1, h2, h3, h4, p, span, label, button, input, b, strong, li {
+    /* Target standard text elements to be purely gradient */
+    h1, h2, h3, h4, p, span, label, b, strong, li {
       background: var(--grad);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -44,6 +44,7 @@
       width: 100vw;
       height: 100vh;
       z-index: -1;
+      pointer-events: none; /* Prevents canvas from blocking clicks */
     }
 
     /* ================= LAYOUT & UI ================= */
@@ -99,7 +100,7 @@
     h1, h2, h3 { font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
     p { line-height: 1.6; font-size: 0.9rem; margin-bottom: 1rem; }
     
-    /* Inputs & Buttons */
+    /* Inputs & Buttons - Solid Colors to fix invisibility bug */
     .input-group { margin-bottom: 1.5rem; display: flex; flex-direction: column; }
     label { font-size: 0.85rem; margin-bottom: 0.5rem; letter-spacing: 1px; }
     
@@ -111,8 +112,11 @@
       font-size: 1rem;
       padding: 0.5rem 0;
       outline: none;
+      color: #FF007F; 
+      text-shadow: 0px 0px 8px rgba(255, 0, 127, 0.4);
       transition: border-color 0.3s ease;
     }
+    input::placeholder { color: rgba(123, 44, 191, 0.5); text-shadow: none; }
     input:focus { border-bottom: 1px solid #FF007F; }
 
     button {
@@ -126,11 +130,14 @@
       width: 100%;
       text-transform: uppercase;
       letter-spacing: 2px;
+      color: #FF007F;
       transition: all 0.3s ease;
       margin-top: 1rem;
     }
     button:hover {
       box-shadow: 0 0 20px rgba(255, 0, 127, 0.3) inset;
+      color: #fff;
+      text-shadow: 0 0 8px rgba(255, 0, 127, 0.8);
     }
 
     /* Dashboard Grids */
@@ -151,17 +158,8 @@
     }
 
     /* Daily Report Magic Grid */
-    .magic-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-    .magic-item {
-      border-left: 2px solid transparent;
-      border-image: var(--grad) 1;
-      padding-left: 1rem;
-    }
+    .magic-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-top: 1rem; }
+    .magic-item { border-left: 2px solid transparent; border-image: var(--grad) 1; padding-left: 1rem; }
   </style>
 </head>
 <body>
@@ -245,7 +243,7 @@
 
         <div style="grid-column: 1 / -1; display: flex; gap: 1rem;">
           <button onclick="toggleGrimoire()">[ OPEN GRIMOIRE ]</button>
-          <button onclick="recalibrate()" style="opacity: 0.6;">[ RECALIBRATE ]</button>
+          <button onclick="recalibrate()" style="border-color: #555; color: #888;">[ RECALIBRATE ]</button>
         </div>
 
       </div>
@@ -391,8 +389,7 @@
         try {
           const [year, month, day] = birthDate.split('-');
           const [hour, min] = birthTime.split(':');
-          // Replace 'YOUR_USER_ID' and 'YOUR_API_KEY' when you have them. 
-          // Until then, the catch block will generate deterministic mock data so the app works.
+          
           const response = await fetch("https://json.astrologyapi.com/v1/planets", {
             method: "POST",
             headers: { "Authorization": "Basic " + btoa("YOUR_USER_ID:YOUR_API_KEY"), "Content-Type": "application/json" },
@@ -404,7 +401,6 @@
           moonSign = astralData.find(p => p.name === "Moon").sign;
           risingSign = astralData.find(p => p.name === "Ascendant").sign;
         } catch (apiError) {
-          // Fallback algorithm for Moon/Rising based on string input so the app works immediately
           console.log("Using deterministic astral fallback.");
           const signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
           const [y, m, d] = birthDate.split('-');
@@ -449,11 +445,58 @@
         dateSum = String(dateSum).split('').reduce((a, b) => parseInt(a) + parseInt(b), 0);
       }
       document.getElementById('num-digit').innerText = dateSum;
-      document.getElementById('num-meaning').innerText = numerologyMeanings[dateSum > 9 ? 9 : dateSum]; // Fallback master numbers to 9 for this array
+      document.getElementById('num-meaning').innerText = numerologyMeanings[dateSum > 9 ? 9 : dateSum]; 
 
-      // 2. Color & Crystal Magic (Based on day of week)
+      // 2. Color & Crystal Magic 
       const dayMagic = daysMagic[now.getDay()];
       document.getElementById('color-magic').innerHTML = `${dayMagic.color} (Planet: ${dayMagic.planet})`;
       document.getElementById('crystal-magic').innerHTML = `${dayMagic.crystal}`;
 
-      // 3. Daily St
+      // 3. Daily Stellar Forces
+      const start = new Date(now.getFullYear(), 0, 0);
+      const dayOfYear = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+      document.getElementById('daily-forces').innerText = dailyForcesText[dayOfYear % dailyForcesText.length];
+
+      // 4. Curriculum
+      const lesson = curriculum[dayOfYear % curriculum.length];
+      document.getElementById('daily-lesson').innerHTML = `<b>> ${lesson.title}</b><br>${lesson.text}`;
+
+      document.getElementById('onboarding').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+    }
+
+    function toggleGrimoire() {
+      const dash = document.getElementById('dashboard'), grim = document.getElementById('grimoire');
+      dash.classList.toggle('hidden'); grim.classList.toggle('hidden');
+    }
+
+    function recalibrate() {
+      localStorage.removeItem('astralProfile');
+      document.getElementById('dashboard').classList.add('hidden');
+      document.getElementById('onboarding').classList.remove('hidden');
+    }
+
+    // ================= SAFE BOOT SEQUENCE =================
+    window.onload = function() {
+      try {
+        const savedData = localStorage.getItem('astralProfile');
+        if(savedData) {
+          const profile = JSON.parse(savedData);
+          // If legacy data without coordinates exists, force an error to trigger a memory wipe
+          if (profile.lat === undefined) throw new Error("Legacy memory detected");
+          
+          document.getElementById('userName').value = profile.name;
+          document.getElementById('birthDate').value = profile.birthDate;
+          document.getElementById('birthTime').value = profile.birthTime;
+          document.getElementById('birthCity').value = profile.birthCity;
+          buildDashboard(profile);
+        }
+      } catch(e) {
+        // Silently clear bad data so the terminal doesn't freeze
+        localStorage.removeItem('astralProfile');
+        console.log("Memory banks wiped due to data structure upgrade.");
+      }
+    };
+  </script>
+</body>
+</html>

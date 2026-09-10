@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ASTRAL NEXUS // Everyday Astrology</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+
+  <style>
+    /* ================= BASE STYLES & GRADIENT DOMINATION ================= */
+    :root {
+      --fuchsia: #FF007F;
+      --uv: #7B2CBF;
+      --grad: linear-gradient(135deg, #FF007F, #7B2CBF);
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000;
+      font-family: 'Space Mono', monospace;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Target all text elements to be purely gradient */
+    h1, h2, h3, h4, p, span, label, button, input, b, strong, li {
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0px 0px 10px rgba(123, 44, 191, 0.4);
+      margin-top: 0;
+    }
+
+    /* P5.js Canvas Background */
+    #p5-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+    }
+
+    /* ================= LAYOUT & UI ================= */
+    #app {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem;
+      box-sizing: border-box;
+      position: relative;
+      z-index: 10;
+    }
+
+    .panel {
+      width: 100%;
+      max-width: 900px;
+      padding: 2rem;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Outlines and Borders */
+    .neon-border {
+      border: 1px solid transparent;
+      border-image: var(--grad) 1;
+      box-shadow: 0 0 20px rgba(123, 44, 191, 0.15);
+    }
+
+    .ascii-box {
+      padding: 1.5rem;
+      position: relative;
+      border: 1px dashed transparent;
+      border-image: var(--grad) 1;
+    }
+    
+    .ascii-box::before {
+      content: '+';
+      position: absolute; top: -10px; left: -5px;
+      background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .ascii-box::after {
+      content: '+';
+      position: absolute; bottom: -10px; right: -5px;
+      background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    /* Typography specifics */
+    h1, h2, h3 { font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
+    p { line-height: 1.6; font-size: 0.9rem; margin-bottom: 1rem; }
+    
+    /* Inputs & Buttons */
+    .input-group { margin-bottom: 1.5rem; display: flex; flex-direction: column; }
+    label { font-size: 0.85rem; margin-bottom: 0.5rem; letter-spacing: 1px; }
+    
+    input {
+      background: transparent;
+      border: none;
+      border-bottom: 1px dashed #7B2CBF;
+      font-family: 'Space Mono', monospace;
+      font-size: 1rem;
+      padding: 0.5rem 0;
+      outline: none;
+      transition: border-color 0.3s ease;
+    }
+    input:focus { border-bottom: 1px solid #FF007F; }
+
+    button {
+      background: transparent;
+      border: 1px solid transparent;
+      border-image: var(--grad) 1;
+      font-family: 'Space Mono', monospace;
+      font-size: 1rem;
+      padding: 1rem;
+      cursor: pointer;
+      width: 100%;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      transition: all 0.3s ease;
+      margin-top: 1rem;
+    }
+    button:hover {
+      box-shadow: 0 0 20px rgba(255, 0, 127, 0.3) inset;
+    }
+
+    /* Dashboard Grids */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    
+    @media (max-width: 768px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+    }
+
+    .data-row { 
+      display: flex; justify-content: space-between; margin-bottom: 0.5rem; 
+      border-bottom: 1px dashed rgba(123,44,191,0.4); padding-bottom: 0.25rem;
+    }
+
+    /* Daily Report Magic Grid */
+    .magic-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .magic-item {
+      border-left: 2px solid transparent;
+      border-image: var(--grad) 1;
+      padding-left: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Canvas for Pure Lines -->
+  <div id="p5-canvas"></div>
+
+  <div id="app">
+    
+    <!-- ================= SCREEN 1: ONBOARDING ================= -->
+    <div id="onboarding" class="panel neon-border">
+      <h1>+ A S T R A L_N E X U S +</h1>
+      <p style="margin-bottom: 2rem;">Initialize celestial coordinates to calculate your destiny.</p>
+      
+      <div class="input-group">
+        <label>DESIGNATION (NAME)</label>
+        <input type="text" id="userName" placeholder="e.g., Orion">
+      </div>
+      <div class="input-group">
+        <label>TERRESTRIAL BIRTH DATE</label>
+        <input type="date" id="birthDate">
+      </div>
+      <div class="input-group">
+        <label>EXACT TIME (APPROXIMATE IF UNKNOWN)</label>
+        <input type="time" id="birthTime">
+      </div>
+      <div class="input-group">
+        <label>BIRTH CITY (e.g., Toronto, Tokyo)</label>
+        <input type="text" id="birthCity" placeholder="City name">
+      </div>
+      
+      <button onclick="calculateAstrology()" id="syncBtn">[ SYNCHRONIZE DESTINY ]</button>
+    </div>
+
+    <!-- ================= SCREEN 2: DASHBOARD ================= -->
+    <div id="dashboard" class="panel neon-border hidden">
+      <header style="border-bottom: 1px solid transparent; border-image: var(--grad) 1; padding-bottom: 1rem;">
+        <h2>++ COSMIC INTERFACE ++</h2>
+        <span id="welcome-msg" style="letter-spacing: 2px; font-weight: bold;"></span>
+      </header>
+      
+      <div class="dashboard-grid">
+        
+        <!-- Left Column: Natal Card -->
+        <div class="ascii-box">
+          <h3>NATAL CARD</h3>
+          <div id="natal-data"></div>
+          <p style="font-size:0.7rem; margin-top: 1rem;">*Root coordinates locked.</p>
+        </div>
+
+        <!-- Right Column: The Daily Report (Most Important) -->
+        <div class="ascii-box" style="box-shadow: 0 0 15px rgba(255,0,127,0.1) inset;">
+          <h3>DAILY REPORT</h3>
+          <p id="daily-date" style="border-bottom: 1px dashed rgba(123,44,191,0.5); padding-bottom: 0.5rem;"></p>
+          
+          <div class="magic-grid">
+            <div class="magic-item">
+              <strong>STELLAR FORCES:</strong>
+              <span id="daily-forces"></span>
+            </div>
+            <div class="magic-item">
+              <strong>NUMEROLOGY [ <span id="num-digit"></span> ]:</strong>
+              <span id="num-meaning"></span>
+            </div>
+            <div class="magic-item">
+              <strong>COLOR MAGIC:</strong>
+              <span id="color-magic"></span>
+            </div>
+            <div class="magic-item">
+              <strong>CRYSTAL:</strong>
+              <span id="crystal-magic"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Row: Curriculum & Tools -->
+        <div class="ascii-box" style="grid-column: 1 / -1;">
+          <h3>MASTER CURRICULUM</h3>
+          <div id="daily-lesson"></div>
+        </div>
+
+        <div style="grid-column: 1 / -1; display: flex; gap: 1rem;">
+          <button onclick="toggleGrimoire()">[ OPEN GRIMOIRE ]</button>
+          <button onclick="recalibrate()" style="opacity: 0.6;">[ RECALIBRATE ]</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================= SCREEN 3: GRIMOIRE ================= -->
+    <div id="grimoire" class="panel neon-border hidden">
+      <h2>++ THE GRIMOIRE ++</h2>
+      <p style="margin-bottom: 1.5rem;">Quick reference tools for the Master Astrologer.</p>
+      
+      <div class="ascii-box" style="margin-bottom: 1rem;">
+        <h3>THE ELEMENTS</h3>
+        <p><b>FIRE (Aries, Leo, Sag):</b> Action, passion, drive.<br>
+           <b>EARTH (Taurus, Virgo, Cap):</b> Physicality, structure, logic.<br>
+           <b>AIR (Gemini, Libra, Aqua):</b> Intellect, communication, social.<br>
+           <b>WATER (Cancer, Scorpio, Pisces):</b> Emotion, intuition, healing.</p>
+      </div>
+
+      <div class="ascii-box" style="margin-bottom: 1rem;">
+        <h3>THE BIG THREE</h3>
+        <p><b>SUN:</b> Your core identity, ego, and basic personality.<br>
+           <b>MOON:</b> Your emotional inner world and instincts.<br>
+           <b>RISING (Ascendant):</b> The mask you wear, how others see you.</p>
+      </div>
+      
+      <button onclick="toggleGrimoire()">[ RETURN TO DASHBOARD ]</button>
+    </div>
+
+  </div>
+
+  <script>
+    // ================= P5.JS WIREFRAME BACKGROUND =================
+    let nodes = [];
+
+    function setup() {
+      let canvas = createCanvas(windowWidth, windowHeight);
+      canvas.parent('p5-canvas');
+      for(let i = 0; i < 60; i++) {
+        nodes.push({
+          x: random(-width, width), y: random(-height, height),
+          angle: random(TWO_PI), speed: random(0.0005, 0.0015),
+          char: random(['+', 'x', '·', '°', '-'])
+        });
+      }
+    }
+
+    function draw() {
+      background(0, 40); 
+      translate(width/2, height/2);
+      
+      let cFuchsia = color('#FF007F');
+      let cUV = color('#7B2CBF');
+      
+      for(let i = 0; i < nodes.length; i++) {
+        let n = nodes[i];
+        n.angle += n.speed;
+        let x = n.x * cos(n.angle) - n.y * sin(n.angle);
+        let y = n.x * sin(n.angle) + n.y * cos(n.angle);
+        
+        let col = lerpColor(cFuchsia, cUV, map(x, -width/2, width/2, 0, 1));
+        
+        fill(col); noStroke(); textFont('Space Mono'); textSize(12);
+        text(n.char, x, y);
+        
+        for(let j = i + 1; j < nodes.length; j++) {
+          let n2 = nodes[j];
+          let x2 = n2.x * cos(n2.angle) - n2.y * sin(n2.angle);
+          let y2 = n2.x * sin(n2.angle) + n2.y * cos(n2.angle);
+          if(dist(x, y, x2, y2) < 150) {
+            stroke(col.levels[0], col.levels[1], col.levels[2], 60);
+            strokeWeight(1); line(x, y, x2, y2);
+          }
+        }
+      }
+    }
+    function windowResized() { resizeCanvas(windowWidth, windowHeight); }
+
+    // ================= DAILY REPORT DATA =================
+    const daysMagic = [
+      { day: "Sunday", color: "Gold & Yellow", crystal: "Sunstone / Clear Quartz", theme: "Vitality, Ego, Success, Core Energy", planet: "The Sun" },
+      { day: "Monday", color: "Silver & White", crystal: "Moonstone / Selenite", theme: "Intuition, Subconscious, Emotion, Healing", planet: "The Moon" },
+      { day: "Tuesday", color: "Red & Crimson", crystal: "Carnelian / Bloodstone", theme: "Action, Courage, Conflict, Passion", planet: "Mars" },
+      { day: "Wednesday", color: "Yellow & Green", crystal: "Citrine / Aventurine", theme: "Communication, Intellect, Travel, Logic", planet: "Mercury" },
+      { day: "Thursday", color: "Royal Blue & Purple", crystal: "Amethyst / Lapis Lazuli", theme: "Expansion, Luck, Wisdom, Abundance", planet: "Jupiter" },
+      { day: "Friday", color: "Pink & Light Green", crystal: "Rose Quartz / Jade", theme: "Love, Beauty, Harmony, Art", planet: "Venus" },
+      { day: "Saturday", color: "Black & Dark Grey", crystal: "Obsidian / Onyx", theme: "Structure, Discipline, Karma, Protection", planet: "Saturn" }
+    ];
+
+    const numerologyMeanings = {
+      1: "New beginnings, leadership, and independence. Plant new seeds today.",
+      2: "Balance, partnership, and diplomacy. Focus on cooperation and patience.",
+      3: "Creativity, expression, and joy. Socialize and let your inner voice out.",
+      4: "Stability, foundation, and hard work. Organize and build systems today.",
+      5: "Change, freedom, and adventure. Expect the unexpected and stay adaptable.",
+      6: "Harmony, nurturing, and responsibility. Focus on home, family, and healing.",
+      7: "Spirituality, analysis, and inner wisdom. A day for research and introspection.",
+      8: "Power, abundance, and karma. Financial focus and executive decisions.",
+      9: "Completion, humanitarianism, and endings. Let go of what no longer serves you."
+    };
+
+    const dailyForcesText = [
+      "The Moon forms a Trine with Venus. Expect a smooth influx of emotional harmony. Ideal for creative problem-solving.",
+      "Mars Squares Saturn today. You may feel resistance in your path. The universe is asking for patience, not force.",
+      "Sun enters a Mutable phase. The stellar performance demands adaptability. Let go of rigid plans and flow with changes.",
+      "Jupiter expands the air element today. A powerful influx for communication. Speak your truth, it will be heard.",
+      "Pluto's subtle shift calls for transformation. Let go of a habit that no longer serves your destined path.",
+      "Mercury aligns with Uranus. Flashes of sudden insight and electrical, fast-paced mental energy. Write down your ideas."
+    ];
+
+    const curriculum = [
+      { title: "Lesson: The Houses", text: "The zodiac wheel is divided into 12 houses. Think of signs as 'how' energy expresses, and houses as 'where' it happens. The 1st house is self, the 7th is partnership." },
+      { title: "Lesson: Planetary Transits", text: "A transit occurs when a planet currently in orbit makes a geometric angle (aspect) to where a planet was when you were born. This creates your daily energy influx." },
+      { title: "Lesson: Mercury Retrograde", text: "Retrograde is an optical illusion where a planet appears to move backward. Astrologically, it signifies a time to 're-do': reflect, revise, review. Never rush!" }
+    ];
+
+    // ================= ASTROLOGY CALCULATIONS & API =================
+    async function calculateAstrology() {
+      const name = document.getElementById('userName').value || "Traveler";
+      const birthDate = document.getElementById('birthDate').value;
+      const birthTime = document.getElementById('birthTime').value;
+      const birthCity = document.getElementById('birthCity').value;
+      const btn = document.getElementById('syncBtn');
+
+      if(!birthDate || !birthTime || !birthCity) {
+        alert("The stars require your date, time, and city of birth.");
+        return;
+      }
+
+      btn.innerText = "[ LOCATING COORDINATES... ]";
+
+      try {
+        // 1. Get Coordinates from Open-Meteo
+        const geoResponse = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(birthCity)}&count=1`);
+        const geoData = await geoResponse.json();
+        if (!geoData.results || geoData.results.length === 0) throw new Error("City not found");
+        
+        const loc = geoData.results[0];
+        btn.innerText = "[ COMMUNICATING WITH STARS... ]";
+
+        // 2. Astrology API Call (With graceful mock fallback if keys are missing/invalid)
+        let sunSign = "Aries", moonSign = "Taurus", risingSign = "Gemini";
+        
+        try {
+          const [year, month, day] = birthDate.split('-');
+          const [hour, min] = birthTime.split(':');
+          // Replace 'YOUR_USER_ID' and 'YOUR_API_KEY' when you have them. 
+          // Until then, the catch block will generate deterministic mock data so the app works.
+          const response = await fetch("https://json.astrologyapi.com/v1/planets", {
+            method: "POST",
+            headers: { "Authorization": "Basic " + btoa("YOUR_USER_ID:YOUR_API_KEY"), "Content-Type": "application/json" },
+            body: JSON.stringify({ day: parseInt(day), month: parseInt(month), year: parseInt(year), hour: parseInt(hour), min: parseInt(min), lat: loc.latitude, lon: loc.longitude, tzone: -5 })
+          });
+          if(!response.ok) throw new Error("API Auth Failed");
+          const astralData = await response.json();
+          sunSign = astralData.find(p => p.name === "Sun").sign;
+          moonSign = astralData.find(p => p.name === "Moon").sign;
+          risingSign = astralData.find(p => p.name === "Ascendant").sign;
+        } catch (apiError) {
+          // Fallback algorithm for Moon/Rising based on string input so the app works immediately
+          console.log("Using deterministic astral fallback.");
+          const signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+          const [y, m, d] = birthDate.split('-');
+          let mNum = parseInt(m), dNum = parseInt(d);
+          if ((mNum == 1 && dNum >= 20) || (mNum == 2 && dNum <= 18)) sunSign = "Aquarius"; else if ((mNum == 2 && dNum >= 19) || (mNum == 3 && dNum <= 20)) sunSign = "Pisces"; else if ((mNum == 3 && dNum >= 21) || (mNum == 4 && dNum <= 19)) sunSign = "Aries"; else if ((mNum == 4 && dNum >= 20) || (mNum == 5 && dNum <= 20)) sunSign = "Taurus"; else if ((mNum == 5 && dNum >= 21) || (mNum == 6 && dNum <= 20)) sunSign = "Gemini"; else if ((mNum == 6 && dNum >= 21) || (mNum == 7 && dNum <= 22)) sunSign = "Cancer"; else if ((mNum == 7 && dNum >= 23) || (mNum == 8 && dNum <= 22)) sunSign = "Leo"; else if ((mNum == 8 && dNum >= 23) || (mNum == 9 && dNum <= 22)) sunSign = "Virgo"; else if ((mNum == 9 && dNum >= 23) || (mNum == 10 && dNum <= 22)) sunSign = "Libra"; else if ((mNum == 10 && dNum >= 23) || (mNum == 11 && dNum <= 21)) sunSign = "Scorpio"; else if ((mNum == 11 && dNum >= 22) || (mNum == 12 && dNum <= 21)) sunSign = "Sagittarius"; else sunSign = "Capricorn";
+          let seed = 0;
+          for (let i = 0; i < (birthDate+birthTime).length; i++) seed += (birthDate+birthTime).charCodeAt(i);
+          moonSign = signs[seed % 12]; risingSign = signs[(seed * 3) % 12];
+        }
+
+        const profile = { name, birthDate, birthTime, birthCity, sunSign, moonSign, risingSign, lat: loc.latitude, lon: loc.longitude };
+        localStorage.setItem('astralProfile', JSON.stringify(profile));
+        
+        buildDashboard(profile);
+
+      } catch (error) {
+        console.error(error);
+        alert("Terrestrial network error. Please check city name and connection.");
+        btn.innerText = "[ SYNCHRONIZE DESTINY ]";
+      }
+    }
+
+    // ================= BUILD DASHBOARD & DAILY MAGIC =================
+    function buildDashboard(profile) {
+      document.getElementById('welcome-msg').innerText = `ALIGNED: ${profile.name.toUpperCase()}`;
+      
+      document.getElementById('natal-data').innerHTML = `
+        <div class="data-row"><span>SUN</span> <span>${profile.sunSign.toUpperCase()}</span></div>
+        <div class="data-row"><span>MOON</span> <span>${profile.moonSign.toUpperCase()}</span></div>
+        <div class="data-row"><span>RISING</span> <span>${profile.risingSign.toUpperCase()}</span></div>
+        <div class="data-row" style="margin-top:0.5rem; font-size:0.75rem; border:none;">
+          <span>LAT: ${profile.lat.toFixed(2)}</span> <span>LON: ${profile.lon.toFixed(2)}</span>
+        </div>
+      `;
+
+      const now = new Date();
+      document.getElementById('daily-date').innerText = now.toDateString().toUpperCase();
+
+      // 1. Numerology Math
+      let dateSum = now.getFullYear() + (now.getMonth() + 1) + now.getDate();
+      while(dateSum > 9 && dateSum !== 11 && dateSum !== 22) {
+        dateSum = String(dateSum).split('').reduce((a, b) => parseInt(a) + parseInt(b), 0);
+      }
+      document.getElementById('num-digit').innerText = dateSum;
+      document.getElementById('num-meaning').innerText = numerologyMeanings[dateSum > 9 ? 9 : dateSum]; // Fallback master numbers to 9 for this array
+
+      // 2. Color & Crystal Magic (Based on day of week)
+      const dayMagic = daysMagic[now.getDay()];
+      document.getElementById('color-magic').innerHTML = `${dayMagic.color} (Planet: ${dayMagic.planet})`;
+      document.getElementById('crystal-magic').innerHTML = `${dayMagic.crystal}`;
+
+      // 3. Daily St

@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 0%;
+    --foreground: 280 40% 92%;
+    --card: 260 30% 4%;
+    --muted: 280 20% 8%;
+    --muted-foreground: 280 18% 62%;
+    --primary: 291 84% 60%;
+    --border: 280 35% 18%;
+    --input: 280 35% 18%;
+    --ring: 291 84% 60%;
+    --radius: 0.25rem;
+    --uv: #8B5CF6;
+    --fuchsia: #C026D3;
+    --pink: #F0ABFC;
+    --font-heading: 'Cinzel', serif;
+    --font-body: 'Cormorant Garamond', serif;
+    --font-mono: 'Space Mono', monospace;
+  }
+
+  body { 
+    background: #000; 
+    color: #F0ABFC; 
+    font-family: var(--font-body); 
+  }
+
+  p, span, h1, h2, h3, h4, h5, h6, li, a, label, strong, em, b, i, small, td, th, code, pre, blockquote, dt, dd, figcaption {
+    background-image: linear-gradient(135deg, var(--uv) 0%, var(--fuchsia) 55%, var(--pink) 100%);
+    -webkit-background-clip: text; 
+    background-clip: text; 
+    -webkit-text-fill-color: transparent;
+  }
+
+  button, input, textarea, select { color: #F0ABFC; }
+  ::placeholder { color: rgba(240,171,252,0.45); }
+  ::selection { background: rgba(192,38,211,0.35); color: #fff; }
+}
+
+@layer components {
+  .uv-text { 
+    background: linear-gradient(135deg, var(--uv) 0%, var(--fuchsia) 55%, var(--pink) 100%); 
+    -webkit-background-clip: text; 
+    background-clip: text; 
+    -webkit-text-fill-color: transparent; 
+  }
+  .uv-glow { filter: drop-shadow(0 0 10px rgba(192,38,211,0.45)); }
+  .uv-glow-strong { filter: drop-shadow(0 0 16px rgba(139,92,246,0.55)) drop-shadow(0 0 28px rgba(192,38,211,0.35)); }
+  .uv-border { 
+    border: 1px solid transparent; 
+    background: linear-gradient(#000,#000) padding-box, linear-gradient(135deg, rgba(139,92,246,0.7), rgba(192,38,211,0.7), rgba(240,171,252,0.5)) border-box; 
+  }
+  .uv-border-soft { border: 1px solid rgba(192,38,211,0.22); }
+  .ascii-frame { font-family: var(--font-mono); white-space: pre; line-height: 1.15; letter-spacing: 0.02em; }
+  
+  .prose-astro h3 { @apply font-heading text-xl mt-6 mb-3; }
+  .prose-astro h4 { @apply font-heading text-lg mt-4 mb-2; }
+  .prose-astro p { @apply text-foreground/85 leading-relaxed mb-3 font-body text-[1.05rem]; }
+  .prose-astro li { @apply text-foreground/80 leading-relaxed ml-4 list-disc mb-1; }
+  .prose-astro strong { @apply uv-text font-semibold; }
+}
+
+@layer utilities {
+  .text-glow { text-shadow: 0 0 14px rgba(192,38,211,0.45); }
+}
